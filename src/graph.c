@@ -1,8 +1,7 @@
 #include "graph.h"
-#include <assert.h>
 
 #define HASH_TAB_SIZE 100000000 /* 哈希表大小 */
-#define PRE 0
+#define PRE 1
 
 typedef uint64_t Hash_Value_T;
 typedef struct PS_Node *PS_Node_T;
@@ -52,6 +51,36 @@ static bool key_not_equal(Seq_Len_T *key1, Seq_Len_T *key2, Seq_Num_T key_len)
     return key_len;
 }
 
+/* 存放被free掉的ps_node */
+static List_T free_ps_nodes;
+
+/* 分配ps_node */
+static PS_Node_T alloc_ps_node(void)
+{
+    static PS_Node_T ps_node; /* 指向第一个可用节点 */
+    static uint64_t left; /*分配池中剩余的ps_node数量 */
+    static uint64_t ps_node_n = 10000000; /* 一次性分配ps_node的数量 */
+
+    if (!list_empty(free_ps_nodes)) /* 先在空闲链表里面分配 */
+      return list_pop_front(free_ps_nodes);
+    else if (left == 0) {
+	ps_node = MALLOC(ps_node_n, struct PS_Node);
+	left = ps_node_n;
+    }
+
+    left--;
+
+    return ps_node++;
+}
+
+static free_ps_node(PS_Node_T ps_node)
+{
+  if (list_size(free_ps_nodes) > 1000)
+    FREE(ps_node); /* 超过容量则让系统释放 */
+  else /* 否则暂存 */
+    list_push_front(free_ps_nodes, ps_node);
+}
+
 /* 如果key存在，则返回对应节点的指针；否则，新建节点，并返回该节点 */
 static Node_T
 find_and_insert(Seq_Len_T *key, Graph_T graph, int32_t step, bool *key_exist_p)
@@ -82,21 +111,20 @@ find_and_insert(Seq_Len_T *key, Graph_T graph, int32_t step, bool *key_exist_p)
 /* 将node加入到相应节点的前驱后继集中 */
 inline static void add_pre_suc(PS_Node_T *ps_node_p, Node_T node)
 {
-    PS_Node_T ps_node; /* 新前驱后继集节点 */
-    NEW(ps_node);
-
+    PS_Node_T ps_node = alloc_ps_node(); /* 新前驱后继集节点 */
+    
     ps_node->node = node;
     ps_node->next = *ps_node_p;
     *ps_node_p = ps_node;
 }
 
-/* 清除node的所有前驱节点 */
+/* 清除node的所有极大前驱节点 */
 inline static void clear_pres(Node_T node)
 {
     for (PS_Node_T p_node = node->precursors, next;
 	 p_node; p_node = next) {
 	next = p_node->next;
-	FREE(p_node);
+	free_ps_node(p_node);
     }
     
     node->precursors = NULL;
@@ -263,6 +291,9 @@ Graph_T build_graph(Suc_Tabs_T suc_tabs)
     graph->tab_size = HASH_TAB_SIZE;
     graph->key_len = key_len;
     
+    /* 暂存被释放的ps_node */
+    free_ps_nodes = list_new(NULL);
+   
     /* 创建源节点和终止节点,并不放入图中 */
     Node_T source_node, dest_node;
     VNEW0(source_node, key_len, Seq_Len_T);

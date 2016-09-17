@@ -12,7 +12,7 @@ static void print_mlcs(MLCS_Set_T mlcs_set)
     /* 打印MLCS */
     printf("\nThere are %d MLCS of length %d: \n\n",
     	   list_size(mlcs_set->mlcs_list), mlcs_set->len);
-    list_traverse(mlcs_set->mlcs_list, print_str, NULL);
+    //   list_traverse(mlcs_set->mlcs_list, print_str, NULL);
 }
 
 int main(int32_t argc, char **argv)
