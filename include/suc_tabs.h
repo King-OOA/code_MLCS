@@ -17,4 +17,3 @@ typedef struct Suc_Tabs {
 Suc_Tabs_T build_suc_tabs(Patset_T sequences);
 bool get_suc_key(Suc_Tabs_T suc_tabs,
 		 Seq_Len_T *key, Char_T ch, Seq_Len_T *suc_key);
-void print_suc_tabs(Suc_Tabs_T suc_tabs);

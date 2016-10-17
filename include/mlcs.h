@@ -20,6 +20,7 @@ typedef struct MLCS_Set {
 } *MLCS_Set_T;
 
 
+#define DNA 4
+#define ABC 26
 
-#define SIGMA 4  /* 字符集大小 */
-#define PRE 0
+#define SIGMA DNA   /* 字符集大小 */
