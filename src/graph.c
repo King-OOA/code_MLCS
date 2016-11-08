@@ -196,12 +196,8 @@ void delete_deg0_nodes(List_Node_T *deg0_nodes_p)
     {
 	next_list_node = list_node->next;
 	Node_T node = list_node->node;
-	List_Node_T next_suc;
-	for (List_Node_T suc = node->successors;
-	     suc; suc = next_suc)
-	{
-	    next_suc = suc->next;
-	    Node_T suc_node = suc->node;
+	for (int8_t i = 0; i < node->suc_num; i++) {
+	    Node_T suc_node = node->successors[i];
 	    suc_node->indegree--;
 	    
 	    if (node->pref_len + 1 == suc_node->pref_len) {
@@ -212,9 +208,9 @@ void delete_deg0_nodes(List_Node_T *deg0_nodes_p)
 		suc_node->pref_len = node->pref_len + 1;
 		suc_node->pref_num = node->pref_num;
 	    }
-	    
-	    free_list_node(suc);
 	}
+	/* 释放后继指针数组 */
+	FREE(node->successors);
 	/* 释放prefixes域 */
 	FREE(node->prefixes);
 	/* 先从哈希表中删除node */
@@ -233,6 +229,7 @@ Node_T create_source_node(Graph_T graph)
     Node_T source_node;
     
     VNEW(source_node, key_len, Seq_Len_T);
+    source_node->suc_num = 0;
     source_node->pref_len = 0;
     source_node->pref_num = 1;
     source_node->indegree = 0;
@@ -245,6 +242,19 @@ Node_T create_source_node(Graph_T graph)
 
     return source_node;
 }
+
+#define add_successors(node, suc_node)					\
+  { (node)->successors =						\
+      realloc((node)->successors, ++(node)->suc_num * sizeof(Node_T));	\
+    (node)->successors[(node)->suc_num-1] = (suc_node);			\
+  }
+
+/* void add_successors(Node_T node, Node_T suc_node) */
+/* { */
+/*   node->successors = */
+/*     realloc(node->successors, ++node->suc_num * sizeof(Node_T)); */
+/*   node->successors[node->suc_num-1] = suc_node; */
+/* } */
 
 /* 逐层构造图,哈希表实现 */
 Node_T build_graph(Suc_Tabs_T suc_tabs)
@@ -292,14 +302,14 @@ Node_T build_graph(Suc_Tabs_T suc_tabs)
 		bool key_exist; /* 该key是否已经存在于图中 */
 		Node_T suc_node = find_and_insert(key, graph, step, &key_exist);
 
-		add_to_list(&node->successors, suc_node);
+		add_successors(node, suc_node);
 		suc_node->indegree++;
 		if (!key_exist)  /*若后继节点不存在,则加入到新节点链表中 */
 		    add_to_list(&new_nodes, suc_node);
 	    }
 
 	    if (no_successors)
-		add_to_list(&node->successors, end_node);
+	      add_successors(node, end_node);
 	}
 
 	*old_nodes_tail_p = cur_nodes;	/* 连接old_nodes_list和cur_nodes_list */

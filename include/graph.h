@@ -12,12 +12,12 @@ typedef struct List_Node {
 } *List_Node_T;
 
 struct Node {
-  //  unsigned char a;
+  uint8_t suc_num; /* 后继节点的数量 */
   Seq_Len_T pref_len; /* 当前mlcs前缀的长度 */
-    MLCS_Num_T pref_num; /* 当前mlcs前缀的数量 */
-    unsigned indegree; /* 入度 */
-    char *prefixes; /* 保存mlcs前缀 */
-    List_Node_T successors; /* 后继集 */
+  MLCS_Num_T pref_num; /* 当前mlcs前缀的数量 */
+  unsigned indegree; /* 入度 */
+  char *prefixes; /* 保存mlcs前缀 */
+    Node_T *successors; /* 后继集 */
     struct Node *next; /* 指向哈希链表下一个节点 */
     struct Node **prev_next; /* 指向哈希链表前一个节点的next域 */
     Seq_Len_T key[]; /* 坐标向量 */

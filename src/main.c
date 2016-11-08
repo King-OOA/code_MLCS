@@ -1,6 +1,7 @@
 #include "suc_tabs.h"
 #include "graph.h"
 #include "print.h"
+#include "makedata.h"
 
 extern uint64_t max_nodes_num;
 extern uint64_t freed_nodes_num;
@@ -12,7 +13,7 @@ int main(int32_t argc, char **argv)
     /* 读取序列,第一个参数表示序列文件 */
     Patset_T sequences = patset_new(argv[1]);
     
-    printf("%d\n", sizeof(struct Node));
+    //printf("%d\n", sizeof(struct Node));
 
     /* 构造后继表数组 */
     printf("\nConstructing successor tables ...\n");
@@ -37,13 +38,13 @@ int main(int32_t argc, char **argv)
     /* if (argc == 3 && strcmp(argv[2], "-o") == 0) */
     bool output = true;
 
-    if (output) {
-      uint32_t mlcs_size = end_node->pref_len * end_node->pref_num;
-      end_node->prefixes =
-	realloc(end_node->prefixes, mlcs_size + 1);
-      end_node->prefixes[mlcs_size] = '\0';
-      puts(end_node->prefixes);
-    }
+    /* if (output) { */
+    /*   uint32_t mlcs_size = end_node->pref_len * end_node->pref_num; */
+    /*   end_node->prefixes = */
+    /* 	realloc(end_node->prefixes, mlcs_size + 1); */
+    /*   end_node->prefixes[mlcs_size] = '\0'; */
+    /*   puts(end_node->prefixes); */
+    /* } */
 
     FREE(end_node->prefixes); FREE(end_node);
       
