@@ -27,7 +27,7 @@ typedef uint64_t Node_Num_T;
 
 typedef struct Hash_Tab {
     uint32_t tab_size; /* 哈希表长 */
-    Node_T tab[];
+    Node_T *tabs[SIGMA]; /* 多个哈希表 */
 } *Hash_Tab_T;
 
 /* 图为哈希表实现 */

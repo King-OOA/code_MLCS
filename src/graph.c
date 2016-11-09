@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "graph.h"
-#define HASH_TAB_SIZE 100000000 /* 哈希表大小 */
+#define HASH_TAB_SIZE 20000000 /* 哈希表大小 */
 #define PRE 1
 
 typedef uint64_t Hash_Value_T;
@@ -110,12 +110,12 @@ static bool key_not_equal(Seq_Len_T *key1, Seq_Len_T *key2, Seq_Num_T key_len)
 
 /* 如果key存在, 则返回对应节点的指针; 否则, 新建节点, 并返回该节点 */
 static Node_T
-find_and_insert(Seq_Len_T *key, Graph_T graph, int32_t step, bool *key_exist_p)
+find_and_insert(char ch, Seq_Len_T *key, Graph_T graph, int32_t step, bool *key_exist_p)
 {
     Hash_Value_T hash_value = hash(key, key_len, step, graph->tab_size);
-    Node_T node;
+    Node_T node, *hash_tab = graph->tabs[(unsigned char) ch];
 
-    for (node = graph->tab[hash_value];
+    for (node = hash_tab[hash_value];
 	 node && key_not_equal(node->key, key, key_len);
 	 node = node->next)
 	;
@@ -125,11 +125,11 @@ find_and_insert(Seq_Len_T *key, Graph_T graph, int32_t step, bool *key_exist_p)
     else { /* 没找到key, 则新建节点, 并插入到哈希链表头 */
 	*key_exist_p = false;
 	node = alloc_node(key);
-	Node_T first_node = graph->tab[hash_value];
+	Node_T first_node = hash_tab[hash_value];
 	node->next = first_node;
 	if (first_node) first_node->prev_next = &node->next;
-	graph->tab[hash_value] = node;
-	node->prev_next = graph->tab + hash_value;
+	hash_tab[hash_value] = node;
+	node->prev_next = hash_tab + hash_value;
     }
 
     return node;
@@ -235,10 +235,10 @@ Node_T create_source_node(Graph_T graph)
     source_node->indegree = 0;
     source_node->prefixes = CALLOC(1, char);    /* 任一非Null地址 */
     source_node->successors = NULL;
-    /* 插入到哈希表第0项 */
+    /* 插入到第一个哈希表第0项 */
     source_node->next = NULL;
-    source_node->prev_next = &graph->tab[0];
-    graph->tab[0] = source_node;
+    source_node->prev_next = graph->tabs[0];
+    *(graph->tabs[0]) = source_node;
 
     return source_node;
 }
@@ -248,13 +248,6 @@ Node_T create_source_node(Graph_T graph)
       realloc((node)->successors, ++(node)->suc_num * sizeof(Node_T));	\
     (node)->successors[(node)->suc_num-1] = (suc_node);			\
   }
-
-/* void add_successors(Node_T node, Node_T suc_node) */
-/* { */
-/*   node->successors = */
-/*     realloc(node->successors, ++node->suc_num * sizeof(Node_T)); */
-/*   node->successors[node->suc_num-1] = suc_node; */
-/* } */
 
 /* 逐层构造图,哈希表实现 */
 Node_T build_graph(Suc_Tabs_T suc_tabs)
@@ -267,7 +260,9 @@ Node_T build_graph(Suc_Tabs_T suc_tabs)
     int32_t step = 1; /* 每隔step, 取一个元素参与hash计算 */
     
     /* 创建图(哈希表) */
-    Graph_T graph = VNEW0(graph, HASH_TAB_SIZE, Node_T); /* 初始化为空 */
+    Graph_T graph; NEW(graph);
+    for (int32_t i = 0; i < SIGMA; i++)
+	graph->tabs[i] = CALLOC(HASH_TAB_SIZE, Node_T); /* 初始化为空 */
     graph->tab_size = HASH_TAB_SIZE;
 
     /* 创建源节点,放入图中 */
@@ -300,7 +295,7 @@ Node_T build_graph(Suc_Tabs_T suc_tabs)
 		    continue; /* 当前字符没有对应的key */
 		no_successors = false; /* 至少有一个后继节点 */
 		bool key_exist; /* 该key是否已经存在于图中 */
-		Node_T suc_node = find_and_insert(key, graph, step, &key_exist);
+		Node_T suc_node = find_and_insert(ch, key, graph, step, &key_exist);
 
 		add_successors(node, suc_node);
 		suc_node->indegree++;

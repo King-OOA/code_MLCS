@@ -38,6 +38,7 @@ int main(int32_t argc, char **argv)
     /* if (argc == 3 && strcmp(argv[2], "-o") == 0) */
     bool output = true;
 
+
     /* if (output) { */
     /*   uint32_t mlcs_size = end_node->pref_len * end_node->pref_num; */
     /*   end_node->prefixes = */

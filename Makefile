@@ -19,7 +19,7 @@ CFLAGS = -Wall -c -std=c99 -O3  -I$(INCLUDE_1) -I$(INCLUDE_2)
 
 
 # 库的出现位置要在.o文件之后
-mlcs_new: main.o $(OBJS)
+mlcs_many_hash_tabs: main.o $(OBJS)
 	$(CC) $^ -static -L$(LIBPATH) $(LIBS) -o $@
 	rm *.o
 	scp -P 12306 $@ guansw@10.171.1.3:/home/guansw/PengZhan
